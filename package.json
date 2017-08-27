@@ -1,0 +1,40 @@
+{
+  "name": "monzolib",
+  "version": "0.1.0",
+  "description": "Fully Featured JS/Node Monzo Library",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.js",
+  "homepage": "https://github.com/robjtede/monzolib#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/robjtede/monzolib.git"
+  },
+  "author": "robjtede",
+  "license": "MIT",
+  "scripts": {
+    "clean": "rimraf ./*.js && rimraf ./*.d.ts",
+    "build": "npm run clean && tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "bugs": {
+    "url": "https://github.com/robjtede/monzolib/issues"
+  },
+  "keywords": [
+    "monzo",
+    "bank",
+    "fintech",
+    "monzolib"
+  ],
+  "dependencies": {
+    "date-fns": "^1.28.5",
+    "debug": "^3.0.1",
+    "lodash": "^4.17.4"
+  },
+  "devDependencies": {
+    "@types/debug": "0.0.30",
+    "@types/lodash": "^4.14.74",
+    "rimraf": "^2.6.1",
+    "tslib": "^1.7.1",
+    "typescript": "^2.4.2"
+  }
+}
