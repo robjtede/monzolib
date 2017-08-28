@@ -1,11 +1,11 @@
 import * as Debug from 'debug'
 
-const debug = Debug('app:monzo:auth')
+const debug = Debug('monzolib:auth')
 
 export const getAccessToken = async (
-  appInfo: AppInfo,
+  appInfo: any,
   authCode: string
-): Promise<{ accessToken: string; refreshToken: string }> => {
+): Promise<AuthTokenPair> => {
   debug('getAccessToken')
 
   const opts = {
@@ -22,12 +22,16 @@ export const getAccessToken = async (
   }
 
   try {
-    const res = await rp(opts)
-    debug('getAccessToken =>', res)
+    // const res = await rp(opts)
+    // debug('getAccessToken =>', res)
 
+    // return {
+    //   accessToken: res.access_token,
+    //   refreshToken: res.refresh_token
+    // }
     return {
-      accessToken: res.access_token,
-      refreshToken: res.refresh_token
+      accessToken: 'res.access_token',
+      refreshToken: 'res.refresh_token'
     }
   } catch (err) {
     debug('getAccessToken failed =>', err.error)
@@ -35,7 +39,10 @@ export const getAccessToken = async (
   }
 }
 
-export const refreshAccess = async (appInfo: AppInfo, refreshToken: string) => {
+export const refreshAccess = async (
+  appInfo: any,
+  refreshToken: string
+): Promise<AuthTokenPair> => {
   debug('refreshAccess')
 
   const opts = {
@@ -51,19 +58,19 @@ export const refreshAccess = async (appInfo: AppInfo, refreshToken: string) => {
   }
 
   try {
-    const res = await rp(opts)
-    debug(
-      'refreshAccess =>',
-      res &&
-      ('refresh_token' in res && res.refresh_token) &&
-      ('access_token' in res && res.access_token)
-        ? '✓'
-        : '✘'
-    )
+    // const res = await rp(opts)
+    // debug(
+    //   'refreshAccess =>',
+    //   res &&
+    //   ('refresh_token' in res && res.refresh_token) &&
+    //   ('access_token' in res && res.access_token)
+    //     ? '✓'
+    //     : '✘'
+    // )
 
     return {
-      accessToken: res.access_token,
-      refreshToken: res.refresh_token
+      accessToken: 'res.access_token',
+      refreshToken: 'res.refresh_token'
     }
   } catch (err) {
     debug('refreshAccess failed =>', err.error)
@@ -71,7 +78,7 @@ export const refreshAccess = async (appInfo: AppInfo, refreshToken: string) => {
   }
 }
 
-export const verifyAccess = async (accessToken: string) => {
+export const verifyAccess = async (accessToken: string): Promise<boolean> => {
   debug('verifyAccess with =>', accessToken)
 
   const opts = {
@@ -83,20 +90,26 @@ export const verifyAccess = async (accessToken: string) => {
   }
 
   try {
-    const res = await rp({
-      ...opts,
-      simple: false
-    })
-    debug(
-      'verifyAccess =>',
-      res && 'authenticated' in res && res.authenticated ? '✓' : '✘'
-    )
+    // const res = await rp({
+    //   ...opts,
+    //   simple: false
+    // })
+    // debug(
+    //   'verifyAccess =>',
+    //   res && 'authenticated' in res && res.authenticated ? '✓' : '✘'
+    // )
 
-    return res && 'authenticated' in res && res.authenticated
+    return false
+    // return res && 'authenticated' in res && res.authenticated
   } catch (err) {
     debug('verifyAccess failed =>', err.error)
 
     if (err.name === 'RequestError') throw err
     else throw new Error(err)
   }
+}
+
+export interface AuthTokenPair {
+  accessToken: string
+  refreshToken: string
 }

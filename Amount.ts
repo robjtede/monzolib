@@ -1,10 +1,12 @@
+import { JSONMap } from 'json-types'
+
 export const enum Currencies {
   EUR = 'EUR',
   GBP = 'GBP',
   USD = 'USD'
 }
 
-const currencies = {
+const currencies: CurrencyMetadataMap = {
   [Currencies.EUR]: { symbol: '€', separator: '.' },
   [Currencies.GBP]: { symbol: '£', separator: '.' },
   [Currencies.USD]: { symbol: '$', separator: '.' }
@@ -177,6 +179,10 @@ export interface CurrencyMetadata {
   separator: string
 }
 
+export interface CurrencyMetadataMap {
+  [currency: string]: CurrencyMetadata
+}
+
 export interface SimpleAmount {
   amount: number
   currency: string
@@ -187,7 +193,7 @@ export interface AmountOpts {
   local?: SimpleAmount
 }
 
-export interface MonzoBalanceResponse {
+export interface MonzoBalanceResponse extends JSONMap {
   balance: number
   // TODO: currency enum-ify
   currency: string
