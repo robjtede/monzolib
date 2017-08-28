@@ -1,4 +1,4 @@
-import { Primitive } from './lib/json-types'
+import { Primitive } from 'json-types'
 
 export type HttpMethods = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS'
 
