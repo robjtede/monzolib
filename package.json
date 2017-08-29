@@ -1,10 +1,10 @@
 {
   "name": "monzolib",
-  "version": "0.1.0",
+  "version": "0.0.1",
   "description": "Fully Featured JS/Node Monzo Library",
-  "main": "./index.js",
-  "types": "./index.d.js",
-  "homepage": "https://github.com/robjtede/monzolib#readme",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.js",
+  "homepage": "http s://github.com/robjtede/monzolib#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/robjtede/monzolib.git"
@@ -12,10 +12,13 @@
   "author": "robjtede",
   "license": "MIT",
   "scripts": {
-    "clean": "rimraf ./*.js && rimraf ./*.d.ts",
+    "clean": "rimraf ./dist/*",
     "build": "npm run clean && tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "precommit": "lint-staged"
+    "build:w": "npm run build -- --watch",
+    "test": "npm run build && ava",
+    "test:w": "npm run test -- --watch",
+    "precommit": "lint-staged",
+    "publish": "copyfiles"
   },
   "bugs": {
     "url": "https://github.com/robjtede/monzolib/issues"
@@ -34,6 +37,8 @@
   "devDependencies": {
     "@types/debug": "0.0.30",
     "@types/lodash": "^4.14.74",
+    "ava": "^0.22.0",
+    "copyfiles": "^1.2.0",
     "eclint": "^2.4.3",
     "husky": "^0.14.3",
     "json-types": "^1.0.0",
@@ -41,14 +46,14 @@
     "prettier": "^1.6.0",
     "rimraf": "^2.6.1",
     "tslib": "^1.7.1",
-    "typescript": "^2.5.1"
+    "typescript": "^2.4.2"
   },
   "lint-staged": {
-    "!*.{ts}": [
+    "!*.{ts,js}": [
       "eclint fix",
       "git add"
     ],
-    "*.ts": [
+    "*.{ts,js}": [
       "eclint fix",
       "prettier --write --no-semi --single-quote",
       "git add"

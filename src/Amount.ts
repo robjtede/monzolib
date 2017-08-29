@@ -36,7 +36,7 @@ export class Amount {
   // returns local currency as native currency
   get exchanged(): Amount | undefined {
     if (this.local) return new Amount({ native: this.local })
-    else return
+    else return undefined
   }
 
   // returns true if negative amount

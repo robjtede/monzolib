@@ -18,8 +18,11 @@
     "preserveConstEnums": true,
     "removeComments": true,
     "strict": true,
-    "target": "es5"
+    "target": "es5",
+    "outDir": "dist/"
   },
-  "files": ["index.ts"],
+  "include": [
+    "src/index.ts"
+  ],
   "exclude": ["node_modules"]
 }
