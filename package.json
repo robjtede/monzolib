@@ -1,6 +1,6 @@
 {
   "name": "monzolib",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Fully Featured JS/Node Monzo Library",
   "main": "./dist/index.js",
   "types": "./dist/index.d.js",
@@ -18,7 +18,7 @@
     "test": "npm run build && ava",
     "test:w": "npm run test -- --watch",
     "precommit": "lint-staged && npm test",
-    "publish": "copyfiles"
+    "prepare": "npm run build"
   },
   "bugs": {
     "url": "https://github.com/robjtede/monzolib/issues"
