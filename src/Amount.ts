@@ -19,13 +19,57 @@ export const enum SignModes {
   Never
 }
 
+export const validateAmountOpts = (opts: AmountOpts) => {
+  if (typeof opts !== 'object') {
+    throw new TypeError('Constructor argument must be an object')
+  }
+
+  if (typeof opts.native !== 'object') {
+    throw new TypeError(
+      'Constructor must have a defined `native` property of type `object`'
+    )
+  }
+
+  if (typeof opts.native.amount !== 'number') {
+    throw new TypeError("`native`'s `amount` property must be of type `number`")
+  }
+
+  if (typeof opts.native.currency !== 'string') {
+    throw new TypeError(
+      "`native`'s `currency` property must be of type `string`"
+    )
+  }
+
+  if (opts.local) {
+    if (typeof opts.local !== 'object') {
+      throw new TypeError(
+        "Constructor's `local` property must be of type `object`"
+      )
+    }
+
+    if (typeof opts.local.amount !== 'number') {
+      throw new TypeError(
+        "`local`'s `amount` property must be of type `number`"
+      )
+    }
+
+    if (typeof opts.local.currency !== 'string') {
+      throw new TypeError(
+        "`local`'s `currency` property must be of type `string`"
+      )
+    }
+  }
+}
+
 export class Amount {
   private readonly native: SimpleAmount
   private readonly local?: SimpleAmount
 
-  constructor({ native, local }: AmountOpts) {
-    this.native = native
-    this.local = local
+  constructor(opts: AmountOpts) {
+    validateAmountOpts(opts)
+
+    this.native = opts.native
+    this.local = opts.local
   }
 
   // returns true if not home currency
@@ -93,7 +137,7 @@ export class Amount {
     return this.amount.toFixed(2)
   }
 
-  // returns amount split into major and minor units
+  // returns amount split into normalized major and minor units
   get split(): string[] {
     return String(this.normalize).split('.')
   }
@@ -118,8 +162,7 @@ export class Amount {
     return this.native.amount
   }
 
-  // format currency with a strftime-like syntax
-  // replacements
+  // format currency with a strftime-like syntax replacements
   // %s -> sign
   // %c -> currency
   // %s -> currency symbol
@@ -134,24 +177,18 @@ export class Amount {
   // %n -> minor
   // %p -> separator
   format(formatString: string = '%s%y%j%p%n'): string {
-    let str = formatString
-
-    str = str.replace(/%s/g, this.sign)
-    str = str.replace(/%c/g, this.native.currency)
-    str = str.replace(/%y/g, this.symbol)
-
-    str = str.replace(/%\+/g, this.signIfPositive)
-    str = str.replace(/%-/g, this.signIfNegative)
-
-    str = str.replace(/%r/g, String(this.raw))
-    str = str.replace(/%a/g, String(this.amount))
-    str = str.replace(/%m/g, String(this.normalize))
-
-    str = str.replace(/%j/g, this.major)
-    str = str.replace(/%n/g, this.minor)
-    str = str.replace(/%p/g, this.separator)
-
-    return str
+    return formatString
+      .replace(/%s/g, this.sign)
+      .replace(/%c/g, this.native.currency)
+      .replace(/%y/g, this.symbol)
+      .replace(/%\+/g, this.signIfPositive)
+      .replace(/%-/g, this.signIfNegative)
+      .replace(/%r/g, String(this.raw))
+      .replace(/%a/g, String(this.amount))
+      .replace(/%m/g, String(this.normalize))
+      .replace(/%j/g, this.major)
+      .replace(/%n/g, this.minor)
+      .replace(/%p/g, this.separator)
   }
 
   get json(): AmountOpts {
@@ -170,7 +207,7 @@ export class Amount {
   }
 
   valueOf(): number {
-    return this.native.amount
+    return this.raw
   }
 }
 

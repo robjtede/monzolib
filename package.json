@@ -1,6 +1,6 @@
 {
   "name": "monzolib",
-  "version": "0.0.1",
+  "version": "0.0.0",
   "description": "Fully Featured JS/Node Monzo Library",
   "main": "./dist/index.js",
   "types": "./dist/index.d.js",
@@ -17,7 +17,7 @@
     "build:w": "npm run build -- --watch",
     "test": "npm run build && ava",
     "test:w": "npm run test -- --watch",
-    "precommit": "lint-staged",
+    "precommit": "lint-staged && npm test",
     "publish": "copyfiles"
   },
   "bugs": {
