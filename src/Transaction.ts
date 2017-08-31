@@ -245,11 +245,11 @@ export class Transaction {
   attachmentUploadRequest(contentType = 'image/jpeg'): MonzoRequest {
     return {
       path: '/attachment/upload',
-      qs: {
+      method: 'POST',
+      body: {
         file_name: 'monux-attachment.jpg',
         file_type: contentType
-      },
-      method: 'POST'
+      }
     }
   }
 
@@ -259,12 +259,12 @@ export class Transaction {
   ): MonzoRequest {
     return {
       path: '/attachment/register',
-      qs: {
+      method: 'POST',
+      body: {
         external_id: this.tx.id,
         file_url: fileUrl,
         file_type: contentType
-      },
-      method: 'POST'
+      }
     }
   }
 

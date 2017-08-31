@@ -31,10 +31,10 @@ export class Attachment {
   attachmentDeregisterRequest(): MonzoRequest {
     return {
       path: '/attachment/deregister',
-      qs: {
+      method: 'POST',
+      body: {
         id: this.id
-      },
-      method: 'POST'
+      }
     }
   }
 
