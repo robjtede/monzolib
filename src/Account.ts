@@ -38,28 +38,10 @@ export class Account {
     }
   }
 
-  transactionsRequest(
-    options: { since?: Date | string; before?: Date; limit?: number } = {}
-  ): MonzoRequest {
+  transactionsRequest(options: PaginationOpts = {}): MonzoRequest {
     const opts: MonzoTransactionQuery = {
       account_id: this.id,
       'expand[]': 'merchant'
-    }
-
-    if (options.since) {
-      if (options.since instanceof Date) {
-        opts.since = options.since.toISOString()
-      } else {
-        opts.since = options.since
-      }
-    }
-
-    if (options.before) {
-      opts.before = options.before.toISOString()
-    }
-
-    if (options.limit) {
-      opts.limit = options.limit
     }
 
     return {
@@ -69,61 +51,51 @@ export class Account {
   }
 
   targetsRequest(): MonzoRequest {
-    const opts: QueryString = {
-      account_id: this.id
-    }
-
     return {
       path: '/targets',
-      qs: opts
+      qs: {
+        account_id: this.id
+      }
     }
   }
 
   limitsRequest(): MonzoRequest {
-    const opts = {
-      account_id: this.id
-    }
-
     return {
       path: '/balance/limits',
-      qs: opts
+      qs: {
+        account_id: this.id
+      }
     }
   }
 
   cardsRequest(): MonzoRequest {
-    const opts = {
-      account_id: this.id
-    }
-
     return {
       path: '/card/list',
-      qs: opts
+      qs: {
+        account_id: this.id
+      }
     }
   }
 
   freezeCardRequest(cardId: string): MonzoRequest {
-    const opts = {
-      card_id: cardId,
-      status: 'INACTIVE'
-    }
-
     return {
       path: '/card/toggle',
-      qs: opts,
-      method: 'PUT'
+      method: 'PUT',
+      body: {
+        card_id: cardId,
+        status: 'INACTIVE'
+      }
     }
   }
 
   defrostCardRequest(cardId: string): MonzoRequest {
-    const opts = {
-      card_id: cardId,
-      status: 'ACTIVE'
-    }
-
     return {
       path: '/card/toggle',
-      qs: opts,
-      method: 'PUT'
+      method: 'PUT',
+      body: {
+        card_id: cardId,
+        status: 'ACTIVE'
+      }
     }
   }
 
@@ -136,8 +108,36 @@ export class Account {
   }
 }
 
-export const accountsRequest = () => {
+export const accountsRequest = (): MonzoRequest => {
   return { path: '/accounts' }
+}
+
+export const paginate = (options: PaginationOpts = {}): QueryString => {
+  const opts: QueryString = {}
+
+  if (options.since) {
+    if (options.since instanceof Date) {
+      opts.since = options.since.toISOString()
+    } else {
+      opts.since = options.since
+    }
+  }
+
+  if (options.before) {
+    opts.before = options.before.toISOString()
+  }
+
+  if (options.limit) {
+    opts.limit = options.limit
+  }
+
+  return opts
+}
+
+export interface PaginationOpts {
+  since?: Date | string
+  before?: Date
+  limit?: number
 }
 
 export interface MonzoAccountsResponse extends JSONMap {
