@@ -13,13 +13,12 @@ export interface QueryString {
 }
 
 export interface MonzoRequest {
-  path: string
-  qs?: QueryString
   body?: QueryString
   headers?: JSONMap
-  method?: HttpMethods
   json?: boolean
+  method?: HttpMethods
+  path: string
+  qs?: QueryString
 }
 
-export const monzoApiAuthRoot = 'https://api.monzo.com'
 export const monzoApiRoot = 'https://api.monzo.com'

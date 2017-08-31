@@ -220,10 +220,13 @@ export class Transaction {
 
     return {
       path: `/transactions/${this.id}`,
+      method: 'PATCH',
       qs: {
-        [metaKey]: val
+        'expand[]': 'merchant'
       },
-      method: 'PATCH'
+      body: {
+        [metaKey]: val
+      }
     }
   }
 

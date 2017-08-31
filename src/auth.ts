@@ -1,112 +1,73 @@
-import * as Debug from 'debug'
+import Debug = require('debug')
+
+import { oneLineTrim } from 'common-tags'
+import { MonzoRequest } from './api'
 
 const debug = Debug('monzolib:auth')
 
-export const getAccessToken = async (
-  appInfo: any,
+export const getAuthRequestUrl = (appInfo: AppInfo): string => {
+  return oneLineTrim`
+    https://auth.getmondo.co.uk/
+    ?client_id=${appInfo.clientId}
+    &redirect_uri=${appInfo.redirectUri}
+    &response_type='code'
+    &state=${appInfo.state}
+  `
+}
+
+export const accessTokenRequest = (
+  appInfo: AppInfo,
   authCode: string
-): Promise<AuthTokenPair> => {
+): MonzoRequest => {
   debug('getAccessToken')
 
-  const opts = {
-    uri: 'https://api.monzo.com/oauth2/token',
-    method: 'post',
-    form: {
+  return {
+    path: '/oauth2/token',
+    method: 'POST',
+    body: {
+      client_id: appInfo.clientId,
+      client_secret: appInfo.clientSecret,
+      code: authCode,
       grant_type: 'authorization_code',
-      client_id: appInfo.client_id,
-      client_secret: appInfo.client_secret,
-      redirect_uri: appInfo.redirect_uri,
-      code: authCode
-    },
-    json: true
-  }
-
-  try {
-    // const res = await rp(opts)
-    // debug('getAccessToken =>', res)
-
-    // return {
-    //   accessToken: res.access_token,
-    //   refreshToken: res.refresh_token
-    // }
-    return {
-      accessToken: 'res.access_token',
-      refreshToken: 'res.refresh_token'
+      redirect_uri: appInfo.redirectUri
     }
-  } catch (err) {
-    debug('getAccessToken failed =>', err.error)
-    throw new Error(err)
   }
 }
 
-export const refreshAccess = async (
-  appInfo: any,
+export const refreshAccess = (
+  appInfo: AppInfo,
   refreshToken: string
-): Promise<AuthTokenPair> => {
+): MonzoRequest => {
   debug('refreshAccess')
 
-  const opts = {
-    uri: 'https://api.monzo.com/oauth2/token',
-    method: 'post',
-    form: {
+  return {
+    path: '/oauth2/token',
+    method: 'POST',
+    body: {
+      client_id: appInfo.clientId,
+      client_secret: appInfo.clientSecret,
       grant_type: 'refresh_token',
-      client_id: appInfo.client_id,
-      client_secret: appInfo.client_secret,
       refresh_token: refreshToken
-    },
-    json: true
-  }
-
-  try {
-    // const res = await rp(opts)
-    // debug(
-    //   'refreshAccess =>',
-    //   res &&
-    //   ('refresh_token' in res && res.refresh_token) &&
-    //   ('access_token' in res && res.access_token)
-    //     ? '✓'
-    //     : '✘'
-    // )
-
-    return {
-      accessToken: 'res.access_token',
-      refreshToken: 'res.refresh_token'
     }
-  } catch (err) {
-    debug('refreshAccess failed =>', err.error)
-    throw new Error(err)
   }
 }
 
-export const verifyAccess = async (accessToken: string): Promise<boolean> => {
+export const verifyAccess = (accessToken: string): MonzoRequest => {
   debug('verifyAccess with =>', accessToken)
 
-  const opts = {
-    uri: 'https://api.monzo.com/ping/whoami',
+  return {
+    path: '/ping/whoami',
     headers: {
       Authorization: `Bearer ${accessToken}`
-    },
-    json: true
+    }
   }
+}
 
-  try {
-    // const res = await rp({
-    //   ...opts,
-    //   simple: false
-    // })
-    // debug(
-    //   'verifyAccess =>',
-    //   res && 'authenticated' in res && res.authenticated ? '✓' : '✘'
-    // )
-
-    return false
-    // return res && 'authenticated' in res && res.authenticated
-  } catch (err) {
-    debug('verifyAccess failed =>', err.error)
-
-    if (err.name === 'RequestError') throw err
-    else throw new Error(err)
-  }
+export interface AppInfo {
+  clientId: string
+  clientSecret: string
+  redirectUri: string
+  state: string
 }
 
 export interface AuthTokenPair {

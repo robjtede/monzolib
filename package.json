@@ -4,7 +4,7 @@
   "description": "Fully Featured JS/Node Monzo Library",
   "main": "./dist/index.js",
   "types": "./dist/index.d.js",
-  "homepage": "http s://github.com/robjtede/monzolib#readme",
+  "homepage": "https://github.com/robjtede/monzolib#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/robjtede/monzolib.git"
@@ -30,11 +30,13 @@
     "monzolib"
   ],
   "dependencies": {
+    "common-tags": "^1.4.0",
     "date-fns": "^1.28.5",
     "debug": "^3.0.1",
     "lodash": "^4.17.4"
   },
   "devDependencies": {
+    "@types/common-tags": "^1.2.5",
     "@types/debug": "0.0.30",
     "@types/lodash": "^4.14.74",
     "ava": "^0.22.0",
