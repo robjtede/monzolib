@@ -9,55 +9,55 @@ const almostEqual = (candidate, target) => {
 }
 
 const nativeAmount = new Amount({
-  native: {
+  domestic: {
     amount: 123,
-    currency: Currencies.GBP
+    currency: 'GBP'
   }
 })
 
 const localAmount = new Amount({
-  native: {
+  domestic: {
     amount: 123,
-    currency: Currencies.GBP
+    currency: 'GBP'
   },
   local: {
     amount: 234,
-    currency: Currencies.USD
+    currency: 'USD'
   }
 })
 
 const usdAmount = new Amount({
-  native: {
+  domestic: {
     amount: 123,
-    currency: Currencies.USD
+    currency: 'USD'
   }
 })
 
 const eurAmount = new Amount({
-  native: {
+  domestic: {
     amount: 123,
-    currency: Currencies.EUR
+    currency: 'EUR'
   }
 })
 
 const preciseAmount = new Amount({
-  native: {
+  domestic: {
     amount: 123.75,
-    currency: Currencies.GBP
+    currency: 'GBP'
   }
 })
 
 const overpreciseAmount = new Amount({
-  native: {
+  domestic: {
     amount: 123.567,
-    currency: Currencies.GBP
+    currency: 'GBP'
   }
 })
 
 const negativeAmount = new Amount({
-  native: {
+  domestic: {
     amount: -123,
-    currency: Currencies.GBP
+    currency: 'GBP'
   }
 })
 
@@ -97,67 +97,67 @@ test('Amount cannot be constructed incorrectly', async t => {
   t.throws(
     () => {
       new Amount({
-        native: {}
+        domestic: {}
       })
     },
     TypeError,
-    'Amount constructor\'s native property should only accept valid `SimpleAmount`s'
+    "Amount constructor's domestic property should only accept valid `SimpleAmount`s"
   )
 
   t.throws(
     () => {
       new Amount({
-        native: {
+        domestic: {
           amount: 123
         }
       })
     },
     TypeError,
-    'Amount constructor\'s native property should only accept valid `SimpleAmount`s'
+    "Amount constructor's domestic property should only accept valid `SimpleAmount`s"
   )
 
   t.throws(
     () => {
       new Amount({
-        native: {
+        domestic: {
           currency: 'GBP'
         }
       })
     },
     TypeError,
-    'Amount constructor\'s native property should only accept valid `SimpleAmount`s'
+    "Amount constructor's domestic property should only accept valid `SimpleAmount`s"
   )
 
   t.throws(
     () => {
       new Amount({
-        native: {
+        domestic: {
           amount: '123',
           currency: 'GBP'
         }
       })
     },
     TypeError,
-    'Amount constructor\'s native property should only accept valid `SimpleAmount`s'
+    "Amount constructor's domestic property should only accept valid `SimpleAmount`s"
   )
 
   t.throws(
     () => {
       new Amount({
-        native: {
+        domestic: {
           amount: 123,
           currency: 1
         }
       })
     },
     TypeError,
-    'Amount constructor\'s native property should only accept valid `SimpleAmount`s'
+    "Amount constructor's domestic property should only accept valid `SimpleAmount`s"
   )
 
   t.throws(
     () => {
       new Amount({
-        native: {
+        domestic: {
           amount: 123,
           currency: 'GBP'
         },
@@ -165,13 +165,13 @@ test('Amount cannot be constructed incorrectly', async t => {
       })
     },
     TypeError,
-    'Amount constructor\'s local property should only accept valid `SimpleAmount`s'
+    "Amount constructor's local property should only accept valid `SimpleAmount`s"
   )
 
   t.throws(
     () => {
       new Amount({
-        native: {
+        domestic: {
           amount: 123,
           currency: 'GBP'
         },
@@ -181,13 +181,13 @@ test('Amount cannot be constructed incorrectly', async t => {
       })
     },
     TypeError,
-    'Amount constructor\'s local property should only accept valid `SimpleAmount`s'
+    "Amount constructor's local property should only accept valid `SimpleAmount`s"
   )
 
   t.throws(
     () => {
       new Amount({
-        native: {
+        domestic: {
           amount: 123,
           currency: 'GBP'
         },
@@ -197,13 +197,13 @@ test('Amount cannot be constructed incorrectly', async t => {
       })
     },
     TypeError,
-    'Amount constructor\'s local property should only accept valid `SimpleAmount`s'
+    "Amount constructor's local property should only accept valid `SimpleAmount`s"
   )
 
   t.throws(
     () => {
       new Amount({
-        native: {
+        domestic: {
           amount: 123,
           currency: 'GBP'
         },
@@ -214,13 +214,13 @@ test('Amount cannot be constructed incorrectly', async t => {
       })
     },
     TypeError,
-    'Amount constructor\'s local property should only accept valid `SimpleAmount`s'
+    "Amount constructor's local property should only accept valid `SimpleAmount`s"
   )
 
   t.throws(
     () => {
       new Amount({
-        native: {
+        domestic: {
           amount: 123,
           currency: 'GBP'
         },
@@ -231,12 +231,12 @@ test('Amount cannot be constructed incorrectly', async t => {
       })
     },
     TypeError,
-    'Amount constructor\'s local property should only accept valid `SimpleAmount`s'
+    "Amount constructor's local property should only accept valid `SimpleAmount`s"
   )
 })
 
 test('Amount#foreign return foreign-ness', async t => {
-  t.false(nativeAmount.foreign, 'native amount should not be foreign')
+  t.false(nativeAmount.foreign, 'domestic amount should not be foreign')
   t.true(localAmount.foreign, 'local amount should be foreign')
 })
 
@@ -244,30 +244,6 @@ test('Amount#amount returns untruncated amount in major units', async t => {
   t.is(nativeAmount.amount, 1.23)
   t.is(preciseAmount.amount, 1.2375)
   t.true(almostEqual(overpreciseAmount.amount, 1.23567))
-})
-
-test('Amount#normalize returns truncated amount in major units', async t => {
-  t.is(nativeAmount.normalize, '1.23')
-  t.is(preciseAmount.normalize, '1.24')
-  t.is(overpreciseAmount.normalize, '1.24')
-})
-
-test('Amount#split returns a tuple of major and minor units', async t => {
-  t.deepEqual(nativeAmount.split, ['1', '23'])
-  t.deepEqual(preciseAmount.split, ['1', '24'])
-  t.deepEqual(overpreciseAmount.split, ['1', '24'])
-})
-
-test('Amount#major returns the major portion', async t => {
-  t.is(nativeAmount.major, '1')
-  t.is(preciseAmount.major, '1')
-  t.is(overpreciseAmount.major, '1')
-})
-
-test('Amount#minor returns the minor portion', async t => {
-  t.is(nativeAmount.minor, '23')
-  t.is(preciseAmount.minor, '24')
-  t.is(overpreciseAmount.minor, '24')
 })
 
 test('Amount#scale returns the major/minor divisor', async t => {
@@ -284,7 +260,7 @@ test('Amount#raw returns the amount in minor units', async t => {
 
 test('Amount#json returns a valid constructor object for the currency Amount', async t => {
   t.deepEqual(nativeAmount.json, {
-    native: {
+    domestic: {
       amount: 123,
       currency: 'GBP'
     },
@@ -292,7 +268,7 @@ test('Amount#json returns a valid constructor object for the currency Amount', a
   })
 
   t.deepEqual(localAmount.json, {
-    native: {
+    domestic: {
       amount: 123,
       currency: 'GBP'
     },
@@ -303,7 +279,7 @@ test('Amount#json returns a valid constructor object for the currency Amount', a
   })
 
   t.deepEqual(preciseAmount.json, {
-    native: {
+    domestic: {
       amount: 123.75,
       currency: 'GBP'
     },
@@ -312,14 +288,14 @@ test('Amount#json returns a valid constructor object for the currency Amount', a
 })
 
 test('Amount#stringify returns a string representation of the constructor object', async t => {
-  t.is(nativeAmount.stringify, '{"native":{"amount":123,"currency":"GBP"}}')
+  t.is(nativeAmount.stringify, '{"domestic":{"amount":123,"currency":"GBP"}}')
   t.is(
     localAmount.stringify,
-    '{"native":{"amount":123,"currency":"GBP"},"local":{"amount":234,"currency":"USD"}}'
+    '{"domestic":{"amount":123,"currency":"GBP"},"local":{"amount":234,"currency":"USD"}}'
   )
   t.is(
     preciseAmount.stringify,
-    '{"native":{"amount":123.75,"currency":"GBP"}}'
+    '{"domestic":{"amount":123.75,"currency":"GBP"}}'
   )
 })
 

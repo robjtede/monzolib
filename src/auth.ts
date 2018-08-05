@@ -1,59 +1,73 @@
 import Debug = require('debug')
 
-import { oneLineTrim } from 'common-tags'
-import { MonzoRequest } from './api'
+import { MonzoRequest, monzoAuthRoot } from './api'
 
 const debug = Debug('monzolib:auth')
 
-export const getAuthRequestUrl = (appInfo: AppInfo): string => {
-  return oneLineTrim`
-    https://auth.getmondo.co.uk/
-    ?client_id=${appInfo.clientId}
-    &redirect_uri=${appInfo.redirectUri}
-    &response_type='code'
-    &state=${appInfo.state}
-  `
+export function getAuthRequestUrl(appInfo: AppInfo): string {
+  debug('getAuthRequestUrl')
+  const url = new URL(monzoAuthRoot)
+
+  url.searchParams.set('client_id', appInfo.client_id)
+  url.searchParams.set('redirect_uri', appInfo.redirect_uri)
+  url.searchParams.set('response_type', appInfo.response_type)
+  url.searchParams.set('state', appInfo.state)
+
+  return url.toString()
 }
 
-export const accessTokenRequest = (
+export function parseAuthUrl(authUrl: string, state: string): string {
+  debug('parseAuthUrl')
+  const url = new URL(authUrl)
+
+  const urlState = url.searchParams.get('state')
+  if (urlState && state !== urlState) throw new Error('auth state mismatch')
+
+  const urlCode = url.searchParams.get('code')
+  if (urlCode) return urlCode
+  else throw new Error('no auth code found')
+}
+
+// http call returns a MonzoAccessResponse
+export function accessTokenRequest(
   appInfo: AppInfo,
   authCode: string
-): MonzoRequest => {
-  debug('getAccessToken')
+): MonzoRequest {
+  debug('accessTokenRequest')
 
   return {
     path: '/oauth2/token',
     method: 'POST',
     body: {
-      client_id: appInfo.clientId,
-      client_secret: appInfo.clientSecret,
+      client_id: appInfo.client_id,
+      client_secret: appInfo.client_secret,
       code: authCode,
       grant_type: 'authorization_code',
-      redirect_uri: appInfo.redirectUri
+      redirect_uri: appInfo.redirect_uri
     }
   }
 }
 
-export const refreshAccess = (
+export function refreshAccessRequest(
   appInfo: AppInfo,
   refreshToken: string
-): MonzoRequest => {
-  debug('refreshAccess')
+): MonzoRequest {
+  debug('refreshAccessRequest')
 
   return {
     path: '/oauth2/token',
     method: 'POST',
     body: {
-      client_id: appInfo.clientId,
-      client_secret: appInfo.clientSecret,
+      client_id: appInfo.client_id,
+      client_secret: appInfo.client_secret,
       grant_type: 'refresh_token',
       refresh_token: refreshToken
     }
   }
 }
 
-export const verifyAccess = (accessToken: string): MonzoRequest => {
-  debug('verifyAccess with =>', accessToken)
+export function verifyAccessRequest(accessToken: string): MonzoRequest {
+  debug('verifyAccessRequest with =>', accessToken)
 
   return {
     path: '/ping/whoami',
@@ -64,13 +78,24 @@ export const verifyAccess = (accessToken: string): MonzoRequest => {
 }
 
 export interface AppInfo {
-  clientId: string
-  clientSecret: string
-  redirectUri: string
+  client_id: string
+  client_secret: string
+  redirect_uri: string
+  response_type: string
   state: string
 }
 
 export interface AuthTokenPair {
   accessToken: string
   refreshToken: string
+}
+
+export interface MonzoAccessResponse {
+  access_token: string
+  client_id: string
+  expires_in: number
+  refresh_token?: string
+  token_type: string
+  scope: string
+  user_id: string
 }

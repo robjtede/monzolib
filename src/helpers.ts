@@ -1,11 +1,12 @@
 import { format, startOfDay, isSameDay, isSameYear, subDays } from 'date-fns'
-import { sortBy, groupBy, map, sumBy } from 'lodash'
+import { groupBy, map, sumBy } from 'lodash'
 
-import { Transaction, MonzoTransactionResponse } from './Transaction'
+import { Transaction } from './Transaction'
 import { Amount, SimpleAmount, MonzoBalanceResponse } from './Amount'
 
 export const enum GroupingStrategy {
   Day = 'day',
+  Category = 'category',
   Merchant = 'merchant',
   None = 'none'
 }
@@ -20,13 +21,19 @@ export const groupTransactions = (
       return (+startOfDay(created)).toString()
     },
 
+    [GroupingStrategy.Category]: tx => {
+      return tx.category.formatted
+    },
+
     [GroupingStrategy.Merchant]: tx => {
       if (typeof tx.merchant === 'string') {
         return tx.merchant
       } else {
         return tx.merchant
           ? tx.merchant.groupId
-          : tx.counterparty.user_id ? 'monzo-contacts' : 'top-ups'
+          : tx.counterparty.user_id
+            ? 'monzo-contacts'
+            : 'top-ups'
       }
     },
 
@@ -38,24 +45,7 @@ export const groupTransactions = (
   return map(groupBy(txs, groupKey[method]), (txs, id) => ({ id, method, txs }))
 }
 
-export const sortTransactionResponses = (
-  txs: MonzoTransactionResponse[],
-  dir: string = 'DESC'
-) => {
-  return sortTransactions(txs.map(tx => new Transaction(tx)), dir).map(
-    tx => tx.json
-  )
-}
-
-export const sortTransactions = (txs: Transaction[], dir: string = 'DESC') => {
-  if (dir === 'DESC') {
-    return sortBy(txs, tx => -tx.created)
-  } else if (dir === 'ASC') {
-    return sortBy(txs, tx => tx.created)
-  } else {
-    return txs
-  }
-}
+// TODO: sortTransactions
 
 export const getGroupTitle = (group: TransactionGroup): string => {
   const titleFns: GroupTitleFunctions = {
@@ -67,10 +57,14 @@ export const getGroupTitle = (group: TransactionGroup): string => {
       } else if (isSameDay(created, subDays(new Date(), 1))) {
         return 'Yesterday'
       } else if (isSameYear(created, new Date())) {
-        return format(created, 'dddd, Do MMMM')
+        return format(created, 'EEEE, do MMMM')
       } else {
-        return format(created, 'dddd, Do MMMM YYYY')
+        return format(created, 'EEEE, do MMMM yyyy')
       }
+    },
+
+    [GroupingStrategy.Category]: group => {
+      return group.txs[0].category.formatted
     },
 
     [GroupingStrategy.Merchant]: group => {
@@ -81,7 +75,9 @@ export const getGroupTitle = (group: TransactionGroup): string => {
       } else {
         return tx.merchant
           ? tx.merchant.name
-          : tx.counterparty.user_id ? 'Monzo Contacts' : 'Top Ups'
+          : tx.counterparty.user_id
+            ? 'Monzo Contacts'
+            : 'Top Ups'
       }
     },
 
@@ -101,20 +97,22 @@ export const sumGroup = (txs: Transaction[]): Amount => {
   const sum = sumBy(filtered, tx => tx.amount.raw)
 
   return new Amount({
-    native: {
+    domestic: {
       amount: sum,
       currency: txs[0].amount.currency
     }
   })
 }
 
-export const extractBalanceAndSpent = (bal: MonzoBalanceResponse) => {
-  const nativeBalance: SimpleAmount = {
+export function extractBalanceAndSpent(
+  bal: MonzoBalanceResponse
+): { balance: Amount; spent: Amount } {
+  const domesticBalance: SimpleAmount = {
     amount: bal.balance,
     currency: bal.currency
   }
 
-  const nativeSpend: SimpleAmount = {
+  const domesticSpend: SimpleAmount = {
     amount: bal.spend_today,
     currency: bal.currency
   }
@@ -135,15 +133,15 @@ export const extractBalanceAndSpent = (bal: MonzoBalanceResponse) => {
 
     return {
       balance: new Amount({
-        native: nativeBalance,
+        domestic: domesticBalance,
         local: localBalance
       }),
-      spent: new Amount({ native: nativeSpend, local: localSpend })
+      spent: new Amount({ domestic: domesticSpend, local: localSpend })
     }
   } else {
     return {
-      balance: new Amount({ native: nativeBalance }),
-      spent: new Amount({ native: nativeSpend })
+      balance: new Amount({ domestic: domesticBalance }),
+      spent: new Amount({ domestic: domesticSpend })
     }
   }
 }

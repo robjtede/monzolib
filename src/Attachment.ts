@@ -17,7 +17,7 @@ export class Attachment {
   }
 
   get type() {
-    return this.att.type
+    return this.att.file_type
   }
 
   get url() {
@@ -28,13 +28,13 @@ export class Attachment {
     return this.att.user_id
   }
 
-  attachmentDeregisterRequest(): MonzoRequest {
+  selfDeregisterRequest(): MonzoRequest {
     return {
       path: '/attachment/deregister',
-      method: 'POST',
       body: {
         id: this.id
-      }
+      },
+      method: 'POST'
     }
   }
 
@@ -54,10 +54,13 @@ export interface MonzoAttachmentResponse extends JSONMap {
   file_type: string
   file_url: string
   id: string
-  // TODO: full mime-type list
   type: string
   url: string
   user_id: string
+}
+
+export interface MonzoAttachmentOuterResponse extends JSONMap {
+  attachment: MonzoAttachmentResponse
 }
 
 export interface MonzoAttachmentUploadResponse extends JSONMap {

@@ -17,7 +17,19 @@ export class Account {
   }
 
   get name(): string {
-    return this.description
+    return this.owners[0].preferred_name
+  }
+
+  get owners(): AccountOwner[] {
+    return this.acc.owners
+  }
+
+  get userId(): string {
+    return this.owners[0].user_id
+  }
+
+  get ownerNames(): string[] {
+    return this.owners.map(x => x.preferred_name)
   }
 
   balanceRequest(): MonzoRequest {
@@ -38,10 +50,28 @@ export class Account {
     }
   }
 
-  transactionsRequest(options: PaginationOpts = {}): MonzoRequest {
+  transactionsRequest(
+    options: { since?: Date | string; before?: Date; limit?: number } = {}
+  ): MonzoRequest {
     const opts: MonzoTransactionQuery = {
       account_id: this.id,
       'expand[]': 'merchant'
+    }
+
+    if (options.since) {
+      if (options.since instanceof Date) {
+        opts.since = options.since.toISOString()
+      } else {
+        opts.since = options.since
+      }
+    }
+
+    if (options.before) {
+      opts.before = options.before.toISOString()
+    }
+
+    if (options.limit) {
+      opts.limit = options.limit
     }
 
     return {
@@ -51,51 +81,35 @@ export class Account {
   }
 
   targetsRequest(): MonzoRequest {
+    const opts: QueryString = {
+      account_id: this.id
+    }
+
     return {
       path: '/targets',
-      qs: {
-        account_id: this.id
-      }
+      qs: opts
     }
   }
 
   limitsRequest(): MonzoRequest {
+    const opts = {
+      account_id: this.id
+    }
+
     return {
       path: '/balance/limits',
-      qs: {
-        account_id: this.id
-      }
+      qs: opts
     }
   }
 
-  cardsRequest(): MonzoRequest {
-    return {
-      path: '/card/list',
-      qs: {
-        account_id: this.id
-      }
+  overdraftStatusRequest(): MonzoRequest {
+    const opts = {
+      account_id: this.id
     }
-  }
 
-  freezeCardRequest(cardId: string): MonzoRequest {
     return {
-      path: '/card/toggle',
-      method: 'PUT',
-      body: {
-        card_id: cardId,
-        status: 'INACTIVE'
-      }
-    }
-  }
-
-  defrostCardRequest(cardId: string): MonzoRequest {
-    return {
-      path: '/card/toggle',
-      method: 'PUT',
-      body: {
-        card_id: cardId,
-        status: 'ACTIVE'
-      }
+      path: '/overdraft/status',
+      qs: opts
     }
   }
 
@@ -108,50 +122,37 @@ export class Account {
   }
 }
 
-export const accountsRequest = (): MonzoRequest => {
-  return { path: '/accounts' }
-}
-
-export const paginate = (options: PaginationOpts = {}): QueryString => {
-  const opts: QueryString = {}
-
-  if (options.since) {
-    if (options.since instanceof Date) {
-      opts.since = options.since.toISOString()
-    } else {
-      opts.since = options.since
+export function accountsRequest(): MonzoRequest {
+  return {
+    path: '/accounts',
+    qs: {
+      account_type: 'uk_retail'
     }
   }
-
-  if (options.before) {
-    opts.before = options.before.toISOString()
-  }
-
-  if (options.limit) {
-    opts.limit = options.limit
-  }
-
-  return opts
-}
-
-export interface PaginationOpts {
-  since?: Date | string
-  before?: Date
-  limit?: number
 }
 
 export interface MonzoAccountsResponse extends JSONMap {
   accounts: MonzoAccountResponse[]
 }
 
+export interface AccountOwner extends JSONMap {
+  user_id: string
+  preferred_name: string
+  preferred_first_name: string
+}
+
 export interface MonzoAccountResponse extends JSONMap {
-  id: string
-  description: string
+  account_number: string
+  closed: boolean
   created: string
+  description: string
+  id: string
+  owners: AccountOwner[]
+  sort_code: string
   type: string
 }
 
-interface MonzoTransactionQuery extends QueryString {
+export interface MonzoTransactionQuery extends QueryString {
   account_id: string
   'expand[]'?: string
   since?: string

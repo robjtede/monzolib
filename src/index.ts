@@ -2,6 +2,7 @@ export * from './Account'
 export * from './Amount'
 export * from './Attachment'
 export * from './Merchant'
+export * from './Pot'
 export * from './Transaction'
 
 export * from './api'

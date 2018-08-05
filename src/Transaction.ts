@@ -1,44 +1,48 @@
 import { format } from 'date-fns'
+import { Primitive, JSONMap } from 'json-types'
 
-import { Amount, SimpleAmount } from './Amount'
+import { Amount } from './Amount'
 import { Attachment, MonzoAttachmentResponse } from './Attachment'
 import { Merchant, MonzoMerchantResponse } from './Merchant'
-import { JSONMap } from 'json-types'
 import { MonzoRequest } from './api'
 
 export class Transaction {
   constructor(private readonly tx: MonzoTransactionResponse) {}
 
   get amount(): Amount {
-    const native: SimpleAmount = {
+    const domestic = {
       amount: this.tx.amount,
       currency: this.tx.currency
     }
 
     // if foreign currency
     if (this.tx.currency !== this.tx.local_currency) {
-      const local: SimpleAmount = {
+      const local = {
         amount: this.tx.local_amount,
         currency: this.tx.local_currency
       }
 
-      return new Amount({ native, local })
+      return new Amount({ domestic, local })
     } else {
-      return new Amount({ native })
+      return new Amount({ domestic })
     }
   }
 
   get attachments(): Attachment[] {
-    return this.tx.attachments.map(att => new Attachment(att))
+    if (this.tx.attachments) {
+      return this.tx.attachments.map(att => new Attachment(att))
+    } else {
+      return []
+    }
   }
 
   get balance(): Amount {
-    const native: SimpleAmount = {
+    const domestic = {
       amount: this.tx.account_balance,
       currency: this.tx.currency
     }
 
-    return new Amount({ native })
+    return new Amount({ domestic })
   }
 
   get category() {
@@ -67,10 +71,13 @@ export class Transaction {
     return 'decline_reason' in this.tx
   }
 
-  get declineReason(): string {
-    return this.declined
-      ? this.tx.decline_reason.replace('_', ' ').toLowerCase()
-      : ''
+  get declineReason(): string | undefined {
+    if (!this.declined) return undefined
+
+    return this.tx.decline_reason
+      .replace(/_/g, ' ')
+      .toLowerCase()
+      .replace('cvc', 'CVC')
   }
 
   get description(): string {
@@ -78,11 +85,29 @@ export class Transaction {
   }
 
   get displayName(): string {
-    return this.merchant &&
-    typeof this.merchant !== 'string' &&
-    this.merchant.name
-      ? this.merchant.name
-      : this.description
+    if (this.counterparty && 'name' in this.counterparty) {
+      return this.counterparty.name
+    } else if (
+      this.merchant &&
+      typeof this.merchant !== 'string' &&
+      'name' in this.merchant
+    ) {
+      return this.merchant.name
+    } else {
+      return this.description
+    }
+  }
+
+  get displaySub(): string {
+    if (this.is.pot_withdraw) {
+      return 'Withdrawn from pot'
+    } else if (this.is.pot_deposit) {
+      return 'Added to pot'
+    } else if (this.declined) {
+      return this.declineReason as string
+    } else {
+      return this.notes.short.trim()
+    }
   }
 
   get hidden(): boolean {
@@ -94,22 +119,16 @@ export class Transaction {
   get icon(): string {
     if ('is_topup' in this.tx.metadata && this.tx.metadata.is_topup) {
       return './assets/icons/topup.png'
-    }
-
-    if (this.tx.counterparty && 'user_id' in this.tx.counterparty) {
-      return './assets/icons/peer.png'
-    }
-
-    if (
+    } else if (
       typeof this.merchant !== 'string' &&
       this.merchant &&
       'logo' in this.merchant &&
       this.merchant.logo
     ) {
       return this.merchant.logo
-    }
-
-    return this.iconFallback
+    } else if (this.tx.counterparty && 'user_id' in this.tx.counterparty) {
+      return './assets/icons/peer.png'
+    } else return this.iconFallback
   }
 
   get iconFallback(): string {
@@ -120,16 +139,28 @@ export class Transaction {
     return this.tx.id
   }
 
-  get is() {
+  get is(): { [feature: string]: boolean } {
     const cash = String(this.category) === 'cash'
     const zero = this.tx.amount === 0
 
     const metaAction = zero && !this.inSpending
+    const pot = this.tx.scheme === 'uk_retail_pot'
+    const pot_deposit = 'pot_deposit_id' in this.tx.metadata
+    const pot_withdraw = 'pot_withdrawal_id' in this.tx.metadata
+    const auto_coin_jar =
+      this.tx.metadata && this.tx.metadata.trigger === 'coin_jar'
+    const rounded =
+      this.tx.metadata && 'coin_jar_transaction' in this.tx.metadata
 
     return {
       metaAction,
       cash,
-      zero
+      zero,
+      pot,
+      pot_deposit,
+      pot_withdraw,
+      auto_coin_jar,
+      rounded
     }
   }
 
@@ -163,15 +194,21 @@ export class Transaction {
 
   get merchant(): Merchant | string | undefined {
     if (!this.tx.merchant) return undefined
-    if (typeof this.tx.merchant === 'string') return this.tx.merchant
-    return new Merchant(this.tx.merchant)
+    else if (typeof this.tx.merchant === 'string') return this.tx.merchant
+    else return new Merchant(this.tx.merchant)
+  }
+
+  get metadata(): JSONMap {
+    return this.tx.metadata
   }
 
   get notes() {
+    const notes = this.tx.notes.replace('%2B', '+')
+
     return {
-      short: this.tx.notes.split('\n')[0],
-      full: this.tx.notes,
-      toString: () => this.tx.notes
+      short: notes.split('\n')[0],
+      full: notes,
+      toString: () => notes
     }
   }
 
@@ -210,23 +247,34 @@ export class Transaction {
     else {
       return `Settled: ${format(
         new Date(this.tx.settled),
-        'h:mma - Do MMMM YYYY'
+        'h:mma - do MMMM YYYY'
       )}`
     }
   }
 
-  annotateRequest(key: string, val: string | number | null): MonzoRequest {
+  selfRequest(): MonzoRequest {
+    return transactionRequest(this.id)
+  }
+
+  changeCategoryRequest(category: string): MonzoRequest {
+    return {
+      path: `/transactions/${this.id}`,
+      body: {
+        category: category
+      },
+      method: 'PATCH'
+    }
+  }
+
+  annotateRequest(key: string, val: Primitive): MonzoRequest {
     const metaKey = `metadata[${key}]`
 
     return {
       path: `/transactions/${this.id}`,
-      method: 'PATCH',
-      qs: {
-        'expand[]': 'merchant'
-      },
       body: {
-        [metaKey]: val
-      }
+        [metaKey]: typeof val === 'string' ? val.replace('+', '%2B') : val
+      },
+      method: 'PATCH'
     }
   }
 
@@ -245,11 +293,11 @@ export class Transaction {
   attachmentUploadRequest(contentType = 'image/jpeg'): MonzoRequest {
     return {
       path: '/attachment/upload',
-      method: 'POST',
       body: {
         file_name: 'monux-attachment.jpg',
         file_type: contentType
-      }
+      },
+      method: 'POST'
     }
   }
 
@@ -259,12 +307,12 @@ export class Transaction {
   ): MonzoRequest {
     return {
       path: '/attachment/register',
-      method: 'POST',
       body: {
         external_id: this.tx.id,
         file_url: fileUrl,
         file_type: contentType
-      }
+      },
+      method: 'POST'
     }
   }
 
@@ -277,33 +325,55 @@ export class Transaction {
   }
 }
 
+export function transactionRequest(id: string): MonzoRequest {
+  return {
+    path: `/transactions/${id}`,
+    qs: {
+      'expand[]': 'merchant'
+    }
+  }
+}
+
+// TODO: some of these fiels are very optional
 export interface MonzoTransactionResponse extends JSONMap {
   account_balance: number
   account_id: string
   amount: number
   attachments: MonzoAttachmentResponse[]
-  // TODO: category enum
+  can_be_excluded_from_breakdown: boolean
+  can_be_made_subscription: boolean
+  can_split_the_bill: boolean
   category: string
   counterparty: MonzoCounterpartyResponse
   created: string
-  // TODO: full currency code list
   currency: string
   decline_reason: string
   dedupe_id: string
   description: string
+  fees: {}
   id: string
   include_in_spending: boolean
+  international: null
   is_load: boolean
+  labels: {}
   local_amount: number
-  // TODO: full currency code list
   local_currency: string
   merchant: MonzoMerchantResponse | string | null
   metadata: JSONMap
   notes: string
-  originator: false
+  originator: boolean
   scheme: string
   settled: string
   updated: string
+  user_id: string
+}
+
+export interface MonzoTransactionOuterResponse extends JSONMap {
+  transaction: MonzoTransactionResponse
+}
+
+export interface MonzoTransactionsResponse extends JSONMap {
+  transactions: MonzoTransactionResponse[]
 }
 
 export interface MonzoCounterpartyResponse extends JSONMap {

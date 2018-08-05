@@ -6,7 +6,7 @@
     "experimentalDecorators": true,
     "forceConsistentCasingInFileNames": true,
     "importHelpers": true,
-    "lib": ["esnext"],
+    "lib": ["esnext", "dom"],
     "module": "commonjs",
     "moduleResolution": "node",
     "noEmitHelpers": true,
@@ -18,11 +18,12 @@
     "preserveConstEnums": true,
     "removeComments": true,
     "strict": true,
-    "target": "es5",
+    "target": "es2015",
     "outDir": "dist/"
   },
   "include": [
-    "src/index.ts"
+    "src/index.ts",
+    "src/@types"
   ],
   "exclude": ["node_modules"]
 }

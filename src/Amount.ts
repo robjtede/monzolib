@@ -1,75 +1,79 @@
-import { JSONMap } from 'json-types'
+export type SignModes = 'always' | 'onlyPositive' | 'onlyNegative' | 'never'
 
-export const enum Currencies {
-  EUR = 'EUR',
-  GBP = 'GBP',
-  USD = 'USD'
-}
-
-const currencies: CurrencyMetadataMap = {
-  [Currencies.EUR]: { symbol: '€', separator: '.' },
-  [Currencies.GBP]: { symbol: '£', separator: '.' },
-  [Currencies.USD]: { symbol: '$', separator: '.' }
-}
-
-export const enum SignModes {
-  Always,
-  OnlyPositive,
-  OnlyNegative,
-  Never
-}
-
-export const validateAmountOpts = (opts: AmountOpts) => {
-  if (typeof opts !== 'object') {
-    throw new TypeError('Constructor argument must be an object')
-  }
-
-  if (typeof opts.native !== 'object') {
-    throw new TypeError(
-      'Constructor must have a defined `native` property of type `object`'
-    )
-  }
-
-  if (typeof opts.native.amount !== 'number') {
-    throw new TypeError("`native`'s `amount` property must be of type `number`")
-  }
-
-  if (typeof opts.native.currency !== 'string') {
-    throw new TypeError(
-      "`native`'s `currency` property must be of type `string`"
-    )
-  }
-
-  if (opts.local) {
-    if (typeof opts.local !== 'object') {
-      throw new TypeError(
-        "Constructor's `local` property must be of type `object`"
-      )
-    }
-
-    if (typeof opts.local.amount !== 'number') {
-      throw new TypeError(
-        "`local`'s `amount` property must be of type `number`"
-      )
-    }
-
-    if (typeof opts.local.currency !== 'string') {
-      throw new TypeError(
-        "`local`'s `currency` property must be of type `string`"
-      )
-    }
-  }
+const irregularExponents: { [currencyCode: string]: number } = {
+  BIF: 0,
+  CLP: 0,
+  CVE: 0,
+  DJF: 0,
+  GNF: 0,
+  ISK: 0,
+  JPY: 0,
+  KMF: 0,
+  KRW: 0,
+  PYG: 0,
+  RWF: 0,
+  UGX: 0,
+  UYI: 0,
+  VND: 0,
+  VUV: 0,
+  XAF: 0,
+  XOF: 0,
+  XPF: 0,
+  MGA: 1,
+  MRU: 1,
+  BHD: 3,
+  IQD: 3,
+  JOD: 3,
+  KWD: 3,
+  LYD: 3,
+  OMR: 3,
+  TND: 3,
+  CLF: 4
 }
 
 export class Amount {
-  private readonly native: SimpleAmount
+  private readonly domestic: SimpleAmount
   private readonly local?: SimpleAmount
+  private readonly formatter: Intl.NumberFormat
 
-  constructor(opts: AmountOpts) {
-    validateAmountOpts(opts)
+  constructor({ domestic, local }: AmountOpts) {
+    if (!domestic) throw new TypeError('provide an amount')
 
-    this.native = opts.native
-    this.local = opts.local
+    if (!('amount' in domestic) || typeof domestic.amount !== 'number') {
+      throw new TypeError('provide a valid value')
+    }
+    if (!('currency' in domestic) || typeof domestic.currency !== 'string') {
+      throw new TypeError('provide a valid currency')
+    }
+
+    if (local && (!('amount' in local) || typeof local.amount !== 'number')) {
+      throw new TypeError('provide a valid value')
+    }
+    if (
+      local &&
+      (!('currency' in local) || typeof local.currency !== 'string')
+    ) {
+      throw new TypeError('provide a valid currency')
+    }
+
+    this.domestic = domestic
+    this.local = local
+
+    const language =
+      (typeof navigator !== 'undefined' &&
+        navigator &&
+        (navigator.language || navigator.browserLanguage)) ||
+      'en-GB'
+
+    this.formatter = Intl.NumberFormat(language, {
+      style: 'currency',
+      currency: this.domestic.currency,
+      minimumFractionDigits: this.exponent
+    })
+  }
+
+  get currency(): string {
+    return this.domestic.currency
   }
 
   // returns true if not home currency
@@ -79,13 +83,13 @@ export class Amount {
 
   // returns local currency as native currency
   get exchanged(): Amount | undefined {
-    if (this.local) return new Amount({ native: this.local })
-    else return undefined
+    if (this.local) return new Amount({ domestic: this.local })
+    else return
   }
 
   // returns true if negative amount
   get negative(): boolean {
-    return this.native.amount <= 0
+    return this.domestic.amount <= 0
   }
 
   // returns true if positive amount
@@ -98,102 +102,96 @@ export class Amount {
     return this.negative ? '-' : '+'
   }
 
-  // returns sign only when positive
-  get signIfPositive(): string {
-    return this.positive ? '+' : ''
-  }
-
-  // returns sign only when negative
-  get signIfNegative(): string {
-    return this.negative ? '-' : ''
-  }
-
-  // returns currency symbol
-  get currency(): string {
-    return this.native.currency
-  }
-
-  // returns currency symbol
-  get symbol(): string {
-    return this.native.currency in currencies
-      ? currencies[this.native.currency].symbol
-      : ''
-  }
-
-  // return currency separator
-  get separator(): string {
-    return this.native.currency in currencies
-      ? currencies[this.native.currency].separator
-      : ''
-  }
-
   // returns amount in major units (no truncation)
   get amount(): number {
-    return Math.abs(this.native.amount) / this.scale
+    return Math.abs(this.domestic.amount) / this.scale
   }
 
-  // returns truncated amount in major units
-  get normalize(): string {
-    return this.amount.toFixed(2)
-  }
-
-  // returns amount split into normalized major and minor units
-  get split(): string[] {
-    return String(this.normalize).split('.')
-  }
-
-  // returns major unit
-  get major(): string {
-    return this.split[0]
-  }
-
-  // returns minor unit
-  get minor(): string {
-    return this.split[1]
+  get exponent(): number {
+    return irregularExponents.hasOwnProperty(this.domestic.currency)
+      ? irregularExponents[this.domestic.currency]
+      : 2
   }
 
   // return number of minor units in major
   get scale(): number {
-    return 100
+    return 10 ** this.exponent
   }
 
   // returns raw amount from api
   get raw(): number {
-    return this.native.amount
+    return this.domestic.amount
   }
 
-  // format currency with a strftime-like syntax replacements
-  // %s -> sign
-  // %c -> currency
-  // %s -> currency symbol
-  //
-  // %+ -> sign if positive
-  // %- -> sign if negative
-  //
-  // %r -> raw amount
-  // %a -> locally formatted amount
-  //
-  // %j -> major
-  // %n -> minor
-  // %p -> separator
-  format(formatString: string = '%s%y%j%p%n'): string {
-    return formatString
-      .replace(/%s/g, this.sign)
-      .replace(/%c/g, this.native.currency)
-      .replace(/%y/g, this.symbol)
-      .replace(/%\+/g, this.signIfPositive)
-      .replace(/%-/g, this.signIfNegative)
-      .replace(/%r/g, String(this.raw))
-      .replace(/%a/g, String(this.amount))
-      .replace(/%m/g, String(this.normalize))
-      .replace(/%j/g, this.major)
-      .replace(/%n/g, this.minor)
-      .replace(/%p/g, this.separator)
+  // returns formatted parts array
+  formatParts({
+    showCurrency = true,
+    signMode = 'always'
+  }: AmountFormatOpts = {}): Intl.NumberPart[] {
+    type NumPartFilterFn = (part: Intl.NumberPart) => boolean
+
+    const parts = this.formatter.formatToParts(this.amount)
+
+    if (this.positive) {
+      parts.unshift({
+        type: 'plusSign',
+        value: '+'
+      })
+    } else {
+      parts.unshift({
+        type: 'minusSign',
+        value: '−'
+      })
+    }
+
+    const strfpart: { [T in Intl.NumberPartTypes]?: NumPartFilterFn } = {
+      currency: () => {
+        return showCurrency
+      },
+      minusSign: () => {
+        return signMode === 'always' || signMode === 'onlyNegative'
+      },
+      plusSign: () => {
+        return signMode === 'always' || signMode === 'onlyPositive'
+      }
+    }
+
+    return parts.filter(({ type, value }) => {
+      if (strfpart.hasOwnProperty(type)) {
+        return (strfpart[type] as NumPartFilterFn)({ type, value })
+      } else {
+        return true
+      }
+    })
+  }
+
+  // returns formatted string
+  format(formatOpts?: AmountFormatOpts): string {
+    return this.formatParts(formatOpts).reduce(
+      (str, part) => str + part.value,
+      ''
+    )
+  }
+
+  // returns formatted html string
+  html(formatOpts?: AmountFormatOpts): string {
+    const str = this.formatParts(formatOpts)
+      .map(({ type, value }) => `<span class="amount__${type}">${value}</span>`)
+      .reduce((str, part) => str + part)
+
+    // construct wrapper
+    const el = document.createElement('span')
+    el.classList.add('amount')
+    el.dataset.positive = this.positive ? 'positive' : 'negative'
+    el.dataset.currency = this.currency
+    el.innerHTML = str
+
+    return el.outerHTML
   }
 
   get json(): AmountOpts {
     return {
-      native: this.native,
+      domestic: this.domestic,
       local: this.local
     }
   }
@@ -202,43 +200,63 @@ export class Amount {
     return JSON.stringify(this.json)
   }
 
+  add(amount: Amount): Amount {
+    if (this.currency !== amount.currency) {
+      throw new Error('amounts cannot be added')
+    }
+
+    return new Amount({
+      domestic: {
+        amount: this.raw + amount.raw,
+        currency: this.currency
+      }
+    })
+  }
+
   toString(): string {
     return this.format()
   }
 
   valueOf(): number {
-    return this.raw
+    return this.domestic.amount
   }
 }
 
-export interface CurrencyMetadata {
+export interface CurrencyDefinition {
   symbol: string
   separator: string
 }
 
-export interface CurrencyMetadataMap {
-  [currency: string]: CurrencyMetadata
+export interface CurrencyLibrary {
+  [currency: string]: CurrencyDefinition
 }
 
 export interface SimpleAmount {
+  // always use subunits
   amount: number
+  // three-letter currency code
   currency: string
 }
 
 export interface AmountOpts {
-  native: SimpleAmount
+  domestic: SimpleAmount
   local?: SimpleAmount
 }
 
-export interface MonzoBalanceResponse extends JSONMap {
+export interface AmountFormatOpts {
+  showCurrency?: boolean
+  signMode?: SignModes
+}
+
+export interface MonzoBalanceResponse {
   balance: number
-  // TODO: currency enum-ify
+  total_balance: number
   currency: string
-  // TODO: currency enum-ify
   local_currency: string
   local_exchange_rate: number
   local_spend: {
-    [currency: string]: number
+    spend_today: number
+    currency: string
   }[]
   spend_today: number
 }
