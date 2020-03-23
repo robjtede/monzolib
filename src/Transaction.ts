@@ -1,10 +1,10 @@
-import { format } from 'date-fns'
-import { Primitive, JSONMap } from 'json-types'
+import { format, parseISO } from 'date-fns'
 
 import { Amount } from './Amount'
 import { Attachment, MonzoAttachmentResponse } from './Attachment'
 import { Merchant, MonzoMerchantResponse } from './Merchant'
 import { MonzoRequest } from './api'
+import { Json } from './helpers'
 
 export class Transaction {
   constructor(private readonly tx: MonzoTransactionResponse) {}
@@ -12,14 +12,14 @@ export class Transaction {
   get amount(): Amount {
     const domestic = {
       amount: this.tx.amount,
-      currency: this.tx.currency
+      currency: this.tx.currency,
     }
 
     // if foreign currency
     if (this.tx.currency !== this.tx.local_currency) {
       const local = {
         amount: this.tx.local_amount,
-        currency: this.tx.local_currency
+        currency: this.tx.local_currency,
       }
 
       return new Amount({ domestic, local })
@@ -39,7 +39,7 @@ export class Transaction {
   get balance(): Amount {
     const domestic = {
       amount: this.tx.account_balance,
-      currency: this.tx.currency
+      currency: this.tx.currency,
     }
 
     return new Amount({ domestic })
@@ -55,7 +55,7 @@ export class Transaction {
     return {
       raw,
       formatted,
-      toString: (): string => raw
+      toString: (): string => raw,
     }
   }
 
@@ -64,7 +64,7 @@ export class Transaction {
   }
 
   get created(): Date {
-    return new Date(this.tx.created)
+    return parseISO(this.tx.created)
   }
 
   get declined(): boolean {
@@ -160,7 +160,7 @@ export class Transaction {
       pot_deposit,
       pot_withdraw,
       auto_coin_jar,
-      rounded
+      rounded,
     }
   }
 
@@ -198,7 +198,7 @@ export class Transaction {
     else return new Merchant(this.tx.merchant)
   }
 
-  get metadata(): JSONMap {
+  get metadata(): Record<string, Json> {
     return this.tx.metadata
   }
 
@@ -208,7 +208,7 @@ export class Transaction {
     return {
       short: notes.split('\n')[0],
       full: notes,
-      toString: () => notes
+      toString: () => notes,
     }
   }
 
@@ -246,8 +246,8 @@ export class Transaction {
     if (this.pending) return 'Pending'
     else {
       return `Settled: ${format(
-        new Date(this.tx.settled),
-        'h:mma - do MMMM YYYY'
+        parseISO(this.tx.settled),
+        'h:mma - do MMMM yyyy',
       )}`
     }
   }
@@ -260,21 +260,21 @@ export class Transaction {
     return {
       path: `/transactions/${this.id}`,
       body: {
-        category: category
+        category: category,
       },
-      method: 'PATCH'
+      method: 'PATCH',
     }
   }
 
-  annotateRequest(key: string, val: Primitive): MonzoRequest {
+  annotateRequest(key: string, val: string | number | boolean): MonzoRequest {
     const metaKey = `metadata[${key}]`
 
     return {
       path: `/transactions/${this.id}`,
       body: {
-        [metaKey]: typeof val === 'string' ? val.replace('+', '%2B') : val
+        [metaKey]: typeof val === 'string' ? val.replace('+', '%2B') : val,
       },
-      method: 'PATCH'
+      method: 'PATCH',
     }
   }
 
@@ -291,28 +291,38 @@ export class Transaction {
   }
 
   attachmentUploadRequest(contentType = 'image/jpeg'): MonzoRequest {
+    const random = Math.ceil(Math.random() * 9999)
+
+    const extensions: any = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/gif': 'gif',
+    }
+    const extension =
+      contentType in extensions ? extensions[contentType] : 'image/jpeg'
+
     return {
       path: '/attachment/upload',
       body: {
-        file_name: 'monux-attachment.jpg',
-        file_type: contentType
+        file_name: `monux-attachment-${random}.${extension}`,
+        file_type: contentType,
       },
-      method: 'POST'
+      method: 'POST',
     }
   }
 
   attachmentRegisterRequest(
     fileUrl: string,
-    contentType = 'image/jpeg'
+    contentType = 'image/jpeg',
   ): MonzoRequest {
     return {
       path: '/attachment/register',
       body: {
         external_id: this.tx.id,
         file_url: fileUrl,
-        file_type: contentType
+        file_type: contentType,
       },
-      method: 'POST'
+      method: 'POST',
     }
   }
 
@@ -329,13 +339,13 @@ export function transactionRequest(id: string): MonzoRequest {
   return {
     path: `/transactions/${id}`,
     qs: {
-      'expand[]': 'merchant'
-    }
+      'expand[]': 'merchant',
+    },
   }
 }
 
-// TODO: some of these fiels are very optional
-export interface MonzoTransactionResponse extends JSONMap {
+// TODO: some of these fields are very optional
+export interface MonzoTransactionResponse extends Record<string, Json> {
   account_balance: number
   account_id: string
   amount: number
@@ -359,7 +369,7 @@ export interface MonzoTransactionResponse extends JSONMap {
   local_amount: number
   local_currency: string
   merchant: MonzoMerchantResponse | string | null
-  metadata: JSONMap
+  metadata: Record<string, Json>
   notes: string
   originator: boolean
   scheme: string
@@ -368,18 +378,18 @@ export interface MonzoTransactionResponse extends JSONMap {
   user_id: string
 }
 
-export interface MonzoTransactionOuterResponse extends JSONMap {
+export interface MonzoTransactionOuterResponse extends Record<string, Json> {
   transaction: MonzoTransactionResponse
 }
 
-export interface MonzoTransactionsResponse extends JSONMap {
+export interface MonzoTransactionsResponse extends Record<string, Json> {
   transactions: MonzoTransactionResponse[]
 }
 
-export interface MonzoCounterpartyResponse extends JSONMap {
+export interface MonzoCounterpartyResponse extends Record<string, Json> {
   name: string
   number: string
-  prefered_name: string
+  preferred_name: string
   user_id: string
 }
 

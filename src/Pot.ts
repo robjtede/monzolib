@@ -1,18 +1,19 @@
+import { parseISO } from 'date-fns'
+
 import { Amount } from './Amount'
 import { MonzoRequest, QueryString } from '.'
-import { JSONMap } from 'json-types'
 
 export class Pot {
   constructor(private readonly pot: MonzoPotResponse) {}
 
   get balance(): Amount {
     return new Amount({
-      domestic: { amount: this.pot.balance, currency: 'GBP' }
+      domestic: { amount: this.pot.balance, currency: 'GBP' },
     })
   }
 
   get created(): Date {
-    return new Date(this.pot.created)
+    return parseISO(this.pot.created)
   }
 
   get currency(): string {
@@ -27,10 +28,12 @@ export class Pot {
     return this.pot.id
   }
 
-  get goalAmount(): Amount {
-    return new Amount({
-      domestic: { amount: this.pot.goal_amount, currency: 'GBP' }
-    })
+  get goalAmount(): Amount | undefined {
+    return this.pot.goal_amount
+      ? new Amount({
+          domestic: { amount: this.pot.goal_amount, currency: 'GBP' },
+        })
+      : undefined
   }
 
   get maximumBalance(): number {
@@ -58,29 +61,29 @@ export class Pot {
   }
 
   get updated(): Date {
-    return new Date(this.pot.updated)
+    return parseISO(this.pot.updated)
   }
 
   deletePotRequest(): MonzoRequest {
     return {
       path: `/pots/${this.id}`,
-      method: 'DELETE'
+      method: 'DELETE',
     }
   }
 
   depositRequest(depositOpts: MonzoPotDepositOpts): MonzoRequest {
     return {
-      path: `/pots/${this.id}/withdraw`,
+      path: `/pots/${this.id}/deposit`,
       method: 'PUT',
-      body: depositOpts
+      body: depositOpts,
     }
   }
 
-  withdrawRequest(withdrawOpts: MonzoPotDepositOpts): MonzoRequest {
+  withdrawRequest(withdrawOpts: MonzoPotWithdrawOpts): MonzoRequest {
     return {
-      path: `/pots/${this.id}/deposit`,
+      path: `/pots/${this.id}/withdraw`,
       method: 'PUT',
-      body: withdrawOpts
+      body: withdrawOpts,
     }
   }
 
@@ -91,23 +94,23 @@ export class Pot {
 
 export function potsRequest(): MonzoRequest {
   return {
-    path: '/pots'
+    path: '/pots',
   }
 }
 
 export function potRequest(id: string): MonzoRequest {
   return {
-    path: `/pots/${id}`
+    path: `/pots/${id}`,
   }
 }
 
-export interface MonzoPotResponse extends JSONMap {
+export interface MonzoPotResponse {
   balance: number
   created: string
   currency: string
   deleted: boolean
   id: string
-  goal_amount: number
+  goal_amount?: number
   maximum_balance: number
   minimum_balance: number
   name: string
@@ -117,7 +120,7 @@ export interface MonzoPotResponse extends JSONMap {
   updated: string
 }
 
-export interface MonzoPotsResponse extends JSONMap {
+export interface MonzoPotsResponse {
   pots: MonzoPotResponse[]
 }
 

@@ -1,4 +1,4 @@
-import { Primitive, JSONMap } from 'json-types'
+import { Json } from './helpers'
 
 export type HttpMethods =
   | 'GET'
@@ -8,13 +8,11 @@ export type HttpMethods =
   | 'DELETE'
   | 'OPTIONS'
 
-export interface QueryString {
-  [key: string]: Primitive | undefined
-}
+export type QueryString = Record<string, string | number | boolean | undefined>
 
 export interface MonzoRequest {
   body?: QueryString
-  headers?: JSONMap
+  headers?: Record<string, Json>
   method?: HttpMethods
   path: string
   qs?: QueryString

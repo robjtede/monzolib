@@ -1,11 +1,12 @@
-import { JSONMap } from 'json-types'
+import { parseISO } from 'date-fns'
+
 import { QueryString, MonzoRequest } from './api'
 
 export class Account {
   constructor(private readonly acc: MonzoAccountResponse) {}
 
   get created(): Date {
-    return new Date(this.acc.created)
+    return parseISO(this.acc.created)
   }
 
   get description(): string {
@@ -29,15 +30,15 @@ export class Account {
   }
 
   get ownerNames(): string[] {
-    return this.owners.map(x => x.preferred_name)
+    return this.owners.map((x) => x.preferred_name)
   }
 
   balanceRequest(): MonzoRequest {
     return {
       path: '/balance',
       qs: {
-        account_id: this.id
-      }
+        account_id: this.id,
+      },
     }
   }
 
@@ -45,17 +46,17 @@ export class Account {
     return {
       path: `/transactions/${txId}`,
       qs: {
-        'expand[]': 'merchant'
-      }
+        'expand[]': 'merchant',
+      },
     }
   }
 
   transactionsRequest(
-    options: { since?: Date | string; before?: Date; limit?: number } = {}
+    options: { since?: Date | string; before?: Date; limit?: number } = {},
   ): MonzoRequest {
     const opts: MonzoTransactionQuery = {
       account_id: this.id,
-      'expand[]': 'merchant'
+      'expand[]': 'merchant',
     }
 
     if (options.since) {
@@ -76,40 +77,40 @@ export class Account {
 
     return {
       path: '/transactions',
-      qs: opts
+      qs: opts,
     }
   }
 
   targetsRequest(): MonzoRequest {
     const opts: QueryString = {
-      account_id: this.id
+      account_id: this.id,
     }
 
     return {
       path: '/targets',
-      qs: opts
+      qs: opts,
     }
   }
 
   limitsRequest(): MonzoRequest {
     const opts = {
-      account_id: this.id
+      account_id: this.id,
     }
 
     return {
       path: '/balance/limits',
-      qs: opts
+      qs: opts,
     }
   }
 
   overdraftStatusRequest(): MonzoRequest {
     const opts = {
-      account_id: this.id
+      account_id: this.id,
     }
 
     return {
       path: '/overdraft/status',
-      qs: opts
+      qs: opts,
     }
   }
 
@@ -126,22 +127,22 @@ export function accountsRequest(): MonzoRequest {
   return {
     path: '/accounts',
     qs: {
-      account_type: 'uk_retail'
-    }
+      account_type: 'uk_retail',
+    },
   }
 }
 
-export interface MonzoAccountsResponse extends JSONMap {
+export interface MonzoAccountsResponse {
   accounts: MonzoAccountResponse[]
 }
 
-export interface AccountOwner extends JSONMap {
+export interface AccountOwner {
   user_id: string
   preferred_name: string
   preferred_first_name: string
 }
 
-export interface MonzoAccountResponse extends JSONMap {
+export interface MonzoAccountResponse {
   account_number: string
   closed: boolean
   created: string

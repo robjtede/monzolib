@@ -9,13 +9,13 @@
     "type": "git",
     "url": "git+https://github.com/robjtede/monzolib.git"
   },
-  "author": "robjtede",
+  "author": "robjtede <robjtede@icloud.com> (https://www.robjtede.dev)",
   "license": "MIT",
   "scripts": {
     "clean": "rimraf ./dist/*",
     "build": "npm run clean && tsc",
     "build:w": "npm run build -- --watch",
-    "test": "npm run build && ava",
+    "test": "ava",
     "test:w": "npm run test -- --watch",
     "precommit": "lint-staged && npm test",
     "prepare": "npm run build"
@@ -30,35 +30,35 @@
     "monzolib"
   ],
   "dependencies": {
-    "common-tags": "^1.8.0",
-    "date-fns": "^2.0.0-alpha.10",
-    "debug": "^3.1.0",
-    "lodash": "^4.17.10"
+    "date-fns": "^2.11.0",
+    "debug": "^4.1.1",
+    "lodash": "^4.17.15"
   },
   "devDependencies": {
-    "@types/common-tags": "^1.4.0",
-    "@types/debug": "0.0.30",
-    "@types/lodash": "^4.14.116",
-    "ava": "^0.25.0",
+    "@types/debug": "4.1.5",
+    "@types/lodash": "^4.14.149",
+    "@types/node": "^13.9.3",
+    "ava": "^2.4.0",
     "copyfiles": "^2.0.0",
-    "eclint": "^2.8.0",
-    "husky": "^0.14.3",
-    "json-types": "^1.0.0",
-    "lint-staged": "^7.2.0",
-    "prettier": "^1.14.0",
+    "eclint": "^2.8.1",
+    "husky": "^4.2.3",
+    "lint-staged": "^10.0.8",
+    "prettier": "^2.0.1",
     "rimraf": "^2.6.2",
-    "tslib": "^1.9.3",
-    "typescript": "^3.0.1"
+    "ts-node": "^8.8.1",
+    "tslib": "^1.11.1",
+    "typescript": "^3.8.3"
   },
-  "lint-staged": {
-    "!*.{ts,js}": [
-      "eclint fix",
-      "git add"
+  "ava": {
+    "compileEnhancements": false,
+    "extensions": [
+      "ts"
     ],
-    "*.{ts,js}": [
-      "eclint fix",
-      "prettier --write --no-semi --single-quote",
-      "git add"
+    "require": [
+      "ts-node/register"
+    ],
+    "files": [
+      "test/**/*.test.ts"
     ]
   }
 }

@@ -1,4 +1,4 @@
-import Debug = require('debug')
+import Debug from 'debug'
 
 import { MonzoRequest, monzoAuthRoot } from './api'
 
@@ -31,7 +31,7 @@ export function parseAuthUrl(authUrl: string, state: string): string {
 // http call returns a MonzoAccessResponse
 export function accessTokenRequest(
   appInfo: AppInfo,
-  authCode: string
+  authCode: string,
 ): MonzoRequest {
   debug('accessTokenRequest')
 
@@ -43,14 +43,14 @@ export function accessTokenRequest(
       client_secret: appInfo.client_secret,
       code: authCode,
       grant_type: 'authorization_code',
-      redirect_uri: appInfo.redirect_uri
-    }
+      redirect_uri: appInfo.redirect_uri,
+    },
   }
 }
 
 export function refreshAccessRequest(
   appInfo: AppInfo,
-  refreshToken: string
+  refreshToken: string,
 ): MonzoRequest {
   debug('refreshAccessRequest')
 
@@ -61,8 +61,8 @@ export function refreshAccessRequest(
       client_id: appInfo.client_id,
       client_secret: appInfo.client_secret,
       grant_type: 'refresh_token',
-      refresh_token: refreshToken
-    }
+      refresh_token: refreshToken,
+    },
   }
 }
 
@@ -72,8 +72,8 @@ export function verifyAccessRequest(accessToken: string): MonzoRequest {
   return {
     path: '/ping/whoami',
     headers: {
-      Authorization: `Bearer ${accessToken}`
-    }
+      Authorization: `Bearer ${accessToken}`,
+    },
   }
 }
 

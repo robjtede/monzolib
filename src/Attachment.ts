@@ -1,5 +1,5 @@
-import { JSONMap } from 'json-types'
 import { MonzoRequest } from './api'
+import { Json } from './helpers'
 
 export class Attachment {
   constructor(private readonly att: MonzoAttachmentResponse) {}
@@ -47,7 +47,7 @@ export class Attachment {
   }
 }
 
-export interface MonzoAttachmentResponse extends JSONMap {
+export interface MonzoAttachmentResponse extends Record<string, Json> {
   created: string
   external_id: string
   // TODO: full mime-type list
@@ -59,11 +59,11 @@ export interface MonzoAttachmentResponse extends JSONMap {
   user_id: string
 }
 
-export interface MonzoAttachmentOuterResponse extends JSONMap {
+export interface MonzoAttachmentOuterResponse extends Record<string, Json> {
   attachment: MonzoAttachmentResponse
 }
 
-export interface MonzoAttachmentUploadResponse extends JSONMap {
+export interface MonzoAttachmentUploadResponse extends Record<string, Json> {
   file_url: string
   upload_url: string
 }

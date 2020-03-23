@@ -28,7 +28,7 @@ const irregularExponents: { [currencyCode: string]: number } = {
   LYD: 3,
   OMR: 3,
   TND: 3,
-  CLF: 4
+  CLF: 4,
 }
 
 export class Amount {
@@ -68,7 +68,7 @@ export class Amount {
     this.formatter = Intl.NumberFormat(language, {
       style: 'currency',
       currency: this.domestic.currency,
-      minimumFractionDigits: this.exponent
+      minimumFractionDigits: this.exponent,
     })
   }
 
@@ -126,7 +126,7 @@ export class Amount {
   // returns formatted parts array
   formatParts({
     showCurrency = true,
-    signMode = 'always'
+    signMode = 'always',
   }: AmountFormatOpts = {}): Intl.NumberPart[] {
     type NumPartFilterFn = (part: Intl.NumberPart) => boolean
 
@@ -135,12 +135,12 @@ export class Amount {
     if (this.positive) {
       parts.unshift({
         type: 'plusSign',
-        value: '+'
+        value: '+',
       })
     } else {
       parts.unshift({
         type: 'minusSign',
-        value: '−'
+        value: '−',
       })
     }
 
@@ -153,7 +153,7 @@ export class Amount {
       },
       plusSign: () => {
         return signMode === 'always' || signMode === 'onlyPositive'
-      }
+      },
     }
 
     return parts.filter(({ type, value }) => {
@@ -169,7 +169,7 @@ export class Amount {
   format(formatOpts?: AmountFormatOpts): string {
     return this.formatParts(formatOpts).reduce(
       (str, part) => str + part.value,
-      ''
+      '',
     )
   }
 
@@ -192,7 +192,7 @@ export class Amount {
   get json(): AmountOpts {
     return {
       domestic: this.domestic,
-      local: this.local
+      local: this.local,
     }
   }
 
@@ -208,8 +208,8 @@ export class Amount {
     return new Amount({
       domestic: {
         amount: this.raw + amount.raw,
-        currency: this.currency
-      }
+        currency: this.currency,
+      },
     })
   }
 

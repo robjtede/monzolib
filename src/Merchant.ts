@@ -1,4 +1,4 @@
-import { JSONMap } from 'json-types'
+import { Json } from './helpers'
 
 export class Merchant {
   constructor(private readonly merchant: MonzoMerchantResponse) {}
@@ -60,7 +60,7 @@ export class Merchant {
   }
 }
 
-export interface MonzoMerchantResponse extends JSONMap {
+export interface MonzoMerchantResponse extends Record<string, Json> {
   address: MonzoAddressResponse
   atm: boolean
   // TODO: category enum
@@ -76,7 +76,7 @@ export interface MonzoMerchantResponse extends JSONMap {
   online: boolean
 }
 
-export interface MonzoAddressResponse extends JSONMap {
+export interface MonzoAddressResponse extends Record<string, Json> {
   address: string
   approximate: boolean
   city: string
@@ -90,7 +90,7 @@ export interface MonzoAddressResponse extends JSONMap {
   zoom_level: number
 }
 
-export interface MonzoMerchantMetadataResponse extends JSONMap {
+export interface MonzoMerchantMetadataResponse extends Record<string, Json> {
   created_for_merchant: string
   created_for_transaction: string
   foursquare_category: string
