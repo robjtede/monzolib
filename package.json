@@ -1,6 +1,6 @@
 {
   "name": "monzolib",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Fully Featured JS/Node Monzo Library",
   "main": "./dist/index.js",
   "types": "./dist/index.d.js",
