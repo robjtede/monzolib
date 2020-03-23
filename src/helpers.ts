@@ -32,8 +32,7 @@ export const groupTransactions = (
 ): TransactionGroup[] => {
   const groupKey: GroupKeyFunctions = {
     [GroupingStrategy.Day]: (tx) => {
-      const created = tx.created
-      return (+startOfDay(created)).toString()
+      return startOfDay(tx.created).toISOString()
     },
 
     [GroupingStrategy.Category]: (tx) => {
